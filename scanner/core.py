@@ -1,31 +1,75 @@
-import socket
+import asyncio
 
-class PortScanner:
+class PortScanner():
 
-    def __init__(self, target):
+    def __init__(
+            self,
+            target,
+            timeout = 2.5,
+            workers = 300
+    ):
+        self.open_ports = []
         self.target = target
+        self.timeout = timeout
+        self.workers = workers
+    async def scan(self, port: int):
+        
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(self.target, port),
+                timeout = self.timeout
+            )
+            self.open_ports.append(port)
+            print(f"[+] {port} OPEN")
+            writer.close()
+            await writer.wait_closed()
 
-    def scan_port(self, port):
-        sock = socket.socket()
-        sock.settimeout(2)
+        except(
+            asyncio.TimeoutError,
+            ConnectionRefusedError,
+            OSError
+        ):
+            pass
+
+    async def worker(self, queue: asyncio.Queue):
 
         try:
-            sock.connect((self.target, port))
-            return "open"
-        except OSError:
-            return "closed"
-        finally:
-            sock.close()
+            while True:
+                port = await queue.get()
 
-    def scan_range(self, begin=1, end=65535):
-        results = []
+                try:
+                    await self.scan(port)
 
-        for port in range(begin, end + 1):
-            status = self.scan_port(port)
-            results.append(f"port {port} is {status}")
+                finally:
+                    queue.task_done()
 
-        return "\n".join(results)
+        except asyncio.CancelledError:
+            return
+        
+    async def main(self):
 
+        queue = asyncio.Queue()
 
-scanner = PortScanner("localhost")
-print(scanner.scan_range())
+        for port in range(1,65536):
+            await queue.put(port)
+        
+        workers = [
+            asyncio.create_task(self.worker(queue))
+            for _ in range(self.workers)
+        ]
+
+        await queue.join()
+
+        for w in workers:
+            w.cancel()
+
+        await asyncio.gather(
+            *workers,
+            return_exceptions=True
+        )
+
+        for port in sorted(self.open_ports):
+            print(f"   {port}")
+
+scanner = PortScanner("127.0.0.1")
+asyncio.run(scanner.main())
