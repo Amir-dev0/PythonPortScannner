@@ -1,4 +1,5 @@
 import asyncio
+from banner import grab_banner
 
 class PortScanner():
 
@@ -17,9 +18,21 @@ class PortScanner():
         try:
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(self.target, port),
-                timeout = self.timeout
+                timeout=self.timeout
             )
-            self.open_ports.append(port)
+
+            banner = await grab_banner(
+                self.target,
+                port
+            )
+
+            self.open_ports.append(
+                {
+                    "port": port,
+                    "banner": banner
+                }
+            )
+
             print(f"[+] {port} OPEN")
             writer.close()
             await writer.wait_closed()
@@ -68,8 +81,14 @@ class PortScanner():
             return_exceptions=True
         )
 
-        for port in sorted(self.open_ports):
-            print(f"   {port}")
+        for result in sorted(
+            self.open_ports,
+            key=lambda x: x["port"]
+        ):
+            print(
+                f"{result['port']} "
+                f"{result['banner']}"
+            )
 
-scanner = PortScanner("127.0.0.1")
+scanner = PortScanner("localhost")
 asyncio.run(scanner.main())
