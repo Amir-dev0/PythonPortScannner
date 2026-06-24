@@ -1,5 +1,5 @@
 import asyncio
-from banner import grab_banner
+from services.banner import grab_banner
 
 class PortScanner():
 
