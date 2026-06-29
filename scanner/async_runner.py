@@ -23,7 +23,7 @@ class AsyncRunner():
 
             for attempt in range(self.retries + 1):
                 try:
-                    coroutine = context.factory()
+                    coroutine = context.factory(context)
                     
                     result = await asyncio.wait_for(
                         coroutine,
@@ -154,6 +154,7 @@ class TaskResult():
 
 @dataclass
 class TaskContext():
-    host: Optional[str] = None
-    port: Optional[int] = None
-    scan_type: Optional[str] = None
+    factory: Callable
+    host: str
+    port: int
+    scan_type: str
