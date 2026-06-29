@@ -1,5 +1,7 @@
 import asyncio
 import random
+from dataclasses import dataclass
+from typing import Any, Optional
 class AsyncRunner():
 
     def __init__(self, limit: int = 500, timeout: int = 3, retries: int = 2, backoff: bool = True):
@@ -30,12 +32,12 @@ class AsyncRunner():
 
                     self.stats ["success"] += 1
                     
-                    return {
-                        "success": True,
-                        "data": result,
-                        "error": None,
-                        "attempt": attempt + 1
-                    }
+                    return TaskResult(
+                        success=True,
+                        data=result,
+                        error=None,
+                        attempt=attempt + 1
+                    )
 
                 except Exception as e:
                     last_error = e
@@ -43,24 +45,25 @@ class AsyncRunner():
                     if not self.should_retry(e):
                         self.stats["error"] += 1
     
-                        return {
-                            "success": False,
-                            "data": None,
-                            "error": str(e),
-                            "attempt": attempt + 1
-                        }
+                        return TaskResult(
+                            success=False,
+                            data=None,
+                            error=str(e),
+                            attempt=attempt + 1
+                        )
+                    
                     if self.backoff and attempt < self.retries:
                         delay = self.get_retry_delay(attempt)
                         await asyncio.sleep(delay)
 
             self.stats["error"] += 1
             
-            return {
-                "success": False,
-                "data": None,
-                "error": str(last_error),
-                "attempt": self.retries + 1
-            }
+            return TaskResult(
+                success=False,
+                data=None,
+                error=str(last_error),
+                attempt= self.retries + 1
+            )
         
     async def run(self, coroutines):
         self.stats = {
@@ -77,10 +80,7 @@ class AsyncRunner():
 
         results = await asyncio.gather(*tasks)
 
-        return {
-            "results": results,
-            "stats": self.stats
-        }
+        return results
 
     def should_retry (self, error: Exception):
         retry_errors = (
@@ -93,4 +93,14 @@ class AsyncRunner():
 
     def get_retry_delay(self, attempt: int) -> float:
         max_delay = 2 ** attempt
-        return random.uniform(0, max_delay) 
+        return random.uniform(0, max_delay)
+    
+    def get_stats(self):
+        return self.stats.copy()
+
+@dataclass
+class TaskResult():
+    success: bool
+    data: Any = None
+    error: Optional[str] = None
+    attempt: int = 1    
