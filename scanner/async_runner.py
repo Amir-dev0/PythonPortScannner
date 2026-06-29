@@ -50,9 +50,7 @@ class AsyncRunner():
                             "attempt": attempt + 1
                         }
                     if self.backoff and attempt < self.retries:
-                        max_delay = 2 ** attempt
-                        delay = random.uniform(0, max_delay)
-                        
+                        delay = self.get_retry_delay(attempt)
                         await asyncio.sleep(delay)
 
             self.stats["error"] += 1
@@ -92,3 +90,7 @@ class AsyncRunner():
         )
 
         return isinstance(error, retry_errors)
+
+    def get_retry_delay(self, attempt: int) -> float:
+        max_delay = 2 ** attempt
+        return random.uniform(0, max_delay) 
