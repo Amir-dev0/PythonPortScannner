@@ -1,11 +1,12 @@
 import asyncio
-
+import random
 class AsyncRunner():
 
-    def __init__(self, limit: int = 500, timeout: int = 3, retries: int = 2):
+    def __init__(self, limit: int = 500, timeout: int = 3, retries: int = 2, backoff: bool = True):
         self.limit = limit
         self.timeout = timeout
         self.retries = retries
+        self.backoff = backoff
         self.semaphore = asyncio.Semaphore(self.limit)
         self.stats = {
             "total": 0,
@@ -14,12 +15,14 @@ class AsyncRunner():
             "timeout": 0
         }
 
-    async def _worker(self, coroutine):
+    async def _worker(self, factory):
         async with self.semaphore:
             last_error = None
 
             for attempt in range(self.retries + 1):
                 try:
+                    coroutine = factory()
+                    
                     result = await asyncio.wait_for(
                         coroutine,
                         timeout=self.timeout
@@ -33,19 +36,31 @@ class AsyncRunner():
                         "error": None,
                         "attempt": attempt + 1
                     }
-                
-                except asyncio.TimeoutError:
-                    last_error = "timeout"
 
                 except Exception as e:
-                    last_error = str(e)
+                    last_error = e
 
-            self.stats["timeout"] += 1    
-                    
+                    if not self.should_retry(e):
+                        self.stats["error"] += 1
+    
+                        return {
+                            "success": False,
+                            "data": None,
+                            "error": str(e),
+                            "attempt": attempt + 1
+                        }
+                    if self.backoff and attempt < self.retries:
+                        max_delay = 2 ** attempt
+                        delay = random.uniform(0, max_delay)
+                        
+                        await asyncio.sleep(delay)
+
+            self.stats["error"] += 1
+            
             return {
                 "success": False,
                 "data": None,
-                "error": last_error,
+                "error": str(last_error),
                 "attempt": self.retries + 1
             }
         
@@ -68,3 +83,12 @@ class AsyncRunner():
             "results": results,
             "stats": self.stats
         }
+
+    def should_retry (self, error: Exception):
+        retry_errors = (
+            asyncio.TimeoutError,
+            ConnectionResetError,
+            ConnectionRefusedError,
+        )
+
+        return isinstance(error, retry_errors)
