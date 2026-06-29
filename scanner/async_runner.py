@@ -80,7 +80,7 @@ class AsyncRunner():
 
         results = await asyncio.gather(*tasks)
 
-        return results
+        return self.aggregate_results(results)
 
     def should_retry (self, error: Exception):
         retry_errors = (
@@ -98,6 +98,24 @@ class AsyncRunner():
     def get_stats(self):
         return self.stats.copy()
 
+    def aggregate_results(self, results):
+        success = []
+        failed = []
+
+        for r in results:
+            if r.success:
+                success.append(r)
+            else:
+                failed.append(r)
+
+        return {
+            "success": success,
+            "failed": failed,
+            "total": len(results),
+            "success_count": len(success),
+            "error_count": len(failed),
+        }        
+            
 @dataclass
 class TaskResult():
     success: bool
