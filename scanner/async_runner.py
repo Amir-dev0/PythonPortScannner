@@ -1,7 +1,7 @@
 import asyncio
 import random
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 class AsyncRunner():
 
     def __init__(self, limit: int = 500, timeout: int = 3, retries: int = 2, backoff: bool = True):
@@ -17,13 +17,13 @@ class AsyncRunner():
             "timeout": 0
         }
 
-    async def _worker(self, factory):
+    async def _worker(self, context: TaskContext):
         async with self.semaphore:
             last_error = None
 
             for attempt in range(self.retries + 1):
                 try:
-                    coroutine = factory()
+                    coroutine = context.factory()
                     
                     result = await asyncio.wait_for(
                         coroutine,
@@ -36,7 +36,10 @@ class AsyncRunner():
                         success=True,
                         data=result,
                         error=None,
-                        attempt=attempt + 1
+                        attempt=attempt + 1,
+                        host=context.host,
+                        port=context.port,
+                        scan_type=context.scan_type        
                     )
 
                 except Exception as e:
@@ -49,7 +52,10 @@ class AsyncRunner():
                             success=False,
                             data=None,
                             error=str(e),
-                            attempt=attempt + 1
+                            attempt=attempt + 1,
+                            host=context.host,
+                            port=context.port,
+                            scan_type=context.scan_type
                         )
                     
                     if self.backoff and attempt < self.retries:
@@ -80,7 +86,7 @@ class AsyncRunner():
 
         results = await asyncio.gather(*tasks)
 
-        return self.aggregate_results(results)
+        return self.build_scan_report(results)
 
     def should_retry (self, error: Exception):
         retry_errors = (
@@ -115,10 +121,39 @@ class AsyncRunner():
             "success_count": len(success),
             "error_count": len(failed),
         }        
-            
+
+    def build_scan_report(self, results):
+        report = {}
+
+        for r in results:
+
+            host = r.host or "unknown"
+
+            if host  not in report:
+                report[host] = {
+                    "open": [],
+                    "closed": []
+                }
+
+            if r.success:
+                report[host]["open"].append(r.port)
+            else:
+                report[host]["closed"].append(r.port)
+
+        return report                
 @dataclass
 class TaskResult():
     success: bool
     data: Any = None
     error: Optional[str] = None
-    attempt: int = 1    
+    attempt: int = 1
+
+    host: Optional[str] = None
+    port: Optional[str] = None
+    scan_type: Optional[str] = None
+
+@dataclass
+class TaskContext():
+    host: Optional[str] = None
+    port: Optional[int] = None
+    scan_type: Optional[str] = None
