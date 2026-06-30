@@ -22,30 +22,27 @@ class AsyncRunner:
             "timeout": 0
         }
 
-    async def _worker(self, context: TaskContext):
-
+    async def _worker(self, context: TaskContext) -> TaskResult:
         """
         Execute a single task with retry, timeout and concurrency control.
         """
 
-        # Limit the number of concurrently running tasks
         async with self.semaphore:
             last_error = None
 
-            # Retry the task until the retry limit is reached
             for attempt in range(self.retries + 1):
                 try:
-                    # Create a fresh coroutine for each retry attempt
+                    # Create a fresh coroutine for every retry attempt
                     coroutine = context.factory(context)
-                    
-                    # Enforce execution timeout
+
+                    # Execute with timeout
                     result = await asyncio.wait_for(
                         coroutine,
                         timeout=self.timeout
                     )
 
                     self.stats["success"] += 1
-                    
+
                     return TaskResult(
                         success=True,
                         data=result,
@@ -53,52 +50,44 @@ class AsyncRunner:
                         attempt=attempt + 1,
                         host=context.host,
                         port=context.port,
-                        scan_type=context.scan_type        
+                        scan_type=context.scan_type
                     )
+
                 except asyncio.TimeoutError as e:
-                    # Store the last timeout error for the final result
                     last_error = e
-
-                    # Update timeout statistics
-                    self.stats["timeout"] += 1
-
-                    if self.backoff and attempt < self.retries:
-                        delay = self.get_retry_delay(attempt)
-                        await asyncio.sleep(delay)
 
                 except Exception as e:
                     last_error = e
 
-                    # Retry only for recoverable errors
+                    # Stop immediately for non-retryable errors
                     if not self.should_retry(e):
-                        self.stats["error"] += 1
-    
-                        return TaskResult(
-                            success=False,
-                            data=None,
-                            error=str(e),
-                            attempt=attempt + 1,
-                            host=context.host,
-                            port=context.port,
-                            scan_type=context.scan_type
-                        )
-                    
-                    if self.backoff and attempt < self.retries:
-                        delay = self.get_retry_delay(attempt)
-                        await asyncio.sleep(delay)
+                        break
 
-            self.stats["error"] += 1
-            
+                # Wait before the next retry (if enabled)
+                if self.backoff and attempt < self.retries:
+                    delay = self.get_retry_delay(attempt)
+                    await asyncio.sleep(delay)
+
+            # Update statistics only once after all attempts have finished
+            if isinstance(last_error, asyncio.TimeoutError):
+                self.stats["timeout"] += 1
+            else:
+                self.stats["error"] += 1
+
+            if isinstance(last_error, asyncio.TimeoutError):
+                error_message = "TimeoutError"
+            else:
+                error_message = str(last_error)   
+
             return TaskResult(
                 success=False,
                 data=None,
-                error=str(last_error),
-                attempt=self.retries + 1,
+                error=error_message,
+                attempt=attempt + 1,
                 host=context.host,
                 port=context.port,
                 scan_type=context.scan_type
             )
-        
     async def run(self, contexts):
 
         """
