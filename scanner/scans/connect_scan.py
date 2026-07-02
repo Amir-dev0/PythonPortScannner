@@ -7,7 +7,23 @@ class ConnectScanner:
         self.runner = AsyncRunner()
 
     async def scan(self, host, ports):
-        pass
+
+        if isinstance(ports, int):
+            ports = [ports]
+        
+        contexts = []
+
+        for port in ports:
+            contexts.append(
+                TaskContext(
+                    factory=self._connect_scan,
+                    host=host,
+                    port=port,
+                    scan_type="connect"
+                )
+            )
+
+        return await self.runner.run(contexts)    
 
     async def _connect_scan(self, context):
         
