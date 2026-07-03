@@ -144,6 +144,36 @@ class SynScanner:
         finally:
 
             sock.close()
+    def _create_socket(self):
+
+        """
+        Create a raw TCP socket.
+        """
+
+        sock = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_RAW,
+            socket.IPPROTO_TCP
+        )
+
+        sock.settimeout(3)
+
+        return sock
+    
+    def _send_packet(
+        self,
+        sock,
+        packet,
+        destination_ip
+    ):
+
+        sock.sendto(
+            packet,
+            (
+                destination_ip,
+                0
+            )
+        )
 
 async def main():
 
@@ -166,7 +196,18 @@ async def main():
     fields = struct.unpack("!HHLLHHHH", packet)
 
     print(fields)
+    sock = scanner._create_socket()
 
+    print(sock)
+    sock = scanner._create_socket()
+
+    scanner._send_packet(
+        sock,
+        packet,
+        destination_ip
+    )
+
+    print("Packet Sent")
 
 if __name__ == "__main__":
     import asyncio
