@@ -10,14 +10,77 @@ class SynScanner:
 
         self.runner = AsyncRunner()
 
-    async def scan(self, host, ports):
+    async def scan(
+        self,
+        host: str,
+        ports: int | list[int]
+    ):
 
-        pass
+        if isinstance(ports, int):
+            ports = [ports]
 
-    async def _syn_scan(self, context):
+        contexts = []
 
-        pass
+        for port in ports:
 
+            contexts.append(
+                TaskContext(
+                    factory=self._syn_scan,
+                    host=host,
+                    port=port,
+                    scan_type="syn"
+                )
+            )
+
+        return await self.runner.run(contexts)
+
+    async def _syn_scan(
+        self,
+        context: TaskContext
+    ):
+        """
+        Perform a TCP SYN scan on a single port.
+        """
+
+        destination_ip = socket.gethostbyname(context.host)
+
+        source_ip = self._get_local_ip(
+            destination_ip
+        )
+
+        source_port = self._generate_source_port()
+
+        packet = self._build_packet(
+            source_ip=source_ip,
+            destination_ip=destination_ip,
+            source_port=source_port,
+            destination_port=context.port
+        )
+
+        sock = self._create_socket()
+
+        try:
+
+            self._send_packet(
+                sock,
+                packet,
+                destination_ip
+            )
+
+            response = self._receive_packet(
+                sock=sock,
+                expected_source_ip=destination_ip,
+                expected_destination_port=source_port
+            )
+
+            if response is None:
+                return "Filtered"
+
+            return self._parse_response(response)
+
+        finally:
+
+            sock.close()
     def _build_packet(self, source_ip,destination_ip, source_port, destination_port):
         
         sequence = random.randint(0, 0xFFFFFFFF)
@@ -71,9 +134,6 @@ class SynScanner:
             urgent_pointer
         )
         return packet
-
-    def _parse_response(self):
-        pass
 
     def _calculate_checksum(self, data: bytes):
 
@@ -175,40 +235,134 @@ class SynScanner:
             )
         )
 
-async def main():
-
-    scanner = SynScanner()
-
-    destination_ip = "8.8.8.8"
-
-    local_ip = scanner._get_local_ip(destination_ip)
-
-    packet = scanner._build_packet(
-        source_ip=local_ip,
-        destination_ip=destination_ip,
-        source_port=50000,
-        destination_port=80
-    )
-
-    print(packet.hex())
-    print(len(packet))
-
-    fields = struct.unpack("!HHLLHHHH", packet)
-
-    print(fields)
-    sock = scanner._create_socket()
-
-    print(sock)
-    sock = scanner._create_socket()
-
-    scanner._send_packet(
+    def _receive_packet(
+        self,
         sock,
-        packet,
-        destination_ip
-    )
+        expected_source_ip: str,
+        expected_destination_port: int
+    ):
+        """
+        Receive packets until the matching TCP response is found.
+        """
 
-    print("Packet Sent")
+        while True:
 
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())    
+            try:
+                packet, _ = sock.recvfrom(65535)
+
+            except socket.timeout:
+                return None
+
+            ip = self._parse_ip_header(packet)
+
+            if ip["protocol"] != socket.IPPROTO_TCP:
+                continue
+
+            if ip["source_ip"] != expected_source_ip:
+                continue
+
+            tcp = self._parse_tcp_header(
+                packet,
+                ip["header_length"]
+            )
+
+            if tcp["destination_port"] != expected_destination_port:
+                continue
+
+            return packet
+    def _parse_ip_header(self, packet: bytes): 
+        ip_header = packet[:20]
+
+        fields = struct.unpack(
+            "!BBHHHBBH4s4s",
+            ip_header
+        )
+
+        version_ihl = fields[0]
+
+        ihl = version_ihl & 0x0F
+
+        header_length = ihl * 4
+
+        source_ip = socket.inet_ntoa(fields[8])
+
+        destination_ip = socket.inet_ntoa(fields[9])
+
+        protocol = fields[6]
+
+        return {
+            "header_length": header_length,
+            "source_ip": source_ip,
+            "destination_ip": destination_ip,
+            "protocol": protocol
+        }
+    def _parse_tcp_header(
+        self,
+        packet: bytes,
+        ip_header_length: int
+    ):
+        tcp_header = packet[
+        ip_header_length:
+        ip_header_length + 20
+        ]
+
+        fields = struct.unpack(
+            "!HHLLBBHHH",
+            tcp_header
+        )
+        source_port = fields[0]
+
+        destination_port = fields[1]
+
+        sequence = fields[2]
+
+        acknowledgement = fields[3]
+
+        offset = fields[4] >> 4
+
+        flags = fields[5]
+
+        return {
+        "source_port": source_port,
+        "destination_port": destination_port,
+        "sequence": sequence,
+        "acknowledgement": acknowledgement,
+        "flags": flags,
+        "header_length": offset * 4
+        }
+    def _generate_source_port(self) -> int:
+
+        """
+        Generate a random ephemeral source port.
+        """
+
+        return random.randint(49152, 65535)
+    
+    def _parse_response(
+        self,
+        packet: bytes
+    ):
+        """
+        Parse the TCP response packet and determine the port state.
+        """
+
+        SYN = 0x02
+        ACK = 0x10
+        RST = 0x04
+
+        ip = self._parse_ip_header(packet)
+
+        tcp = self._parse_tcp_header(
+            packet,
+            ip["header_length"]
+        )
+
+        flags = tcp["flags"]
+
+        if (flags & (SYN | ACK)) == (SYN | ACK):
+            return "Open"
+
+        if flags & RST:
+            return "Closed"
+
+        return "Unknown"
