@@ -1,6 +1,6 @@
 import asyncio
 from scanner.async_runner import AsyncRunner, TaskContext
-
+from scanner.constants import PortState
 class ConnectScanner:
 
     def __init__(self):
@@ -35,4 +35,4 @@ class ConnectScanner:
         writer.close()
         await writer.wait_closed()
 
-        return "Open"
+        return PortState.OPEN

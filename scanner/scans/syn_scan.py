@@ -2,7 +2,7 @@ import struct
 import random
 import socket
 from scanner.async_runner import AsyncRunner, TaskContext
-
+from scanner.constants import PortState
 
 class SynScanner:
 
@@ -74,7 +74,7 @@ class SynScanner:
             )
 
             if response is None:
-                return "Filtered"
+                return PortState.FILTERED
 
             return self._parse_response(response)
 
@@ -360,9 +360,9 @@ class SynScanner:
         flags = tcp["flags"]
 
         if (flags & (SYN | ACK)) == (SYN | ACK):
-            return "Open"
+            return PortState.OPEN
 
         if flags & RST:
-            return "Closed"
+            return PortState.CLOSED
 
-        return "Unknown"
+        return PortState.UNKNOWN
