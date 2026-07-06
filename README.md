@@ -125,3 +125,9 @@ This project is built with the following goals in mind:
 - Readability
 
 ---
+
+## Usage
+
+```bash
+python3 main.py
+```
