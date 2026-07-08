@@ -1,22 +1,26 @@
 # PythonPortScanner
 
-A modern asynchronous TCP port scanner written in Python, designed with a modular architecture and built for extensibility.
+A modern asynchronous TCP port scanner written in Python, built with a modular architecture and designed for extensibility.
 
-The project focuses on clean architecture, concurrency, and maintainability rather than being just another simple port scanner.
+Rather than being just another port scanner, this project focuses on clean code, object-oriented design, asynchronous execution, and building a solid foundation for more advanced network scanning features.
 
 ---
 
 ## Features
 
-- Asynchronous scanning using `asyncio`
-- Configurable concurrency limit
-- Automatic retry mechanism
-- Timeout handling
-- TCP Connect Scan
-- Banner Grabbing
-- Rich task metadata
-- Modular scanner architecture
-- Comprehensive test suite
+### Implemented
+
+* Asynchronous scanning using `asyncio`
+* Configurable concurrency with `AsyncRunner`
+* Retry mechanism
+* Timeout handling
+* TCP Connect Scan
+* SYN Scan (Raw Socket)
+* Banner Grabbing
+* Command Line Interface (CLI)
+* Scanner Factory pattern
+* Structured scan results using `TaskResult`
+* Unit tests with `pytest`
 
 ---
 
@@ -25,12 +29,25 @@ The project focuses on clean architecture, concurrency, and maintainability rath
 ```text
 scanner/
 │
-├── async_runner.py        # Asynchronous execution engine
+├── async_runner.py
+│
+├── cli/
+│   ├── application.py
+│   └── parser.py
+│
+├── factory/
+│   └── scanner_factory.py
+│
+├── parser/
+│   └── port_parser.py
 │
 ├── scans/
 │   ├── connect_scan.py
 │   ├── banner_scan.py
 │   └── syn_scan.py
+│
+├── services/
+│   └── banner.py
 │
 ├── fingerprint/
 │   └── os_detection.py
@@ -42,24 +59,25 @@ scanner/
 
 ## Current Scanners
 
-| Scanner | Status |
-|---------|--------|
-| Connect Scan | ✅ Implemented |
-| Banner Grabbing | ✅ Implemented |
-| SYN Scan | 🚧 Planned |
+| Scanner         | Status         |
+| --------------- | -------------- |
+| Connect Scan    | ✅ Implemented  |
+| Banner Grabbing | ✅ Implemented  |
+| SYN Scan        | ✅ Implemented  |
+| OS Detection    | 🚧 In Progress |
 
 ---
 
 ## Planned Features
 
-- SYN Scan
-- UDP Scan
-- Service Detection
-- Version Detection
-- OS Fingerprinting
-- JSON Export
-- CSV Export
-- CLI Interface
+* UDP Scan
+* Service Version Detection
+* OS Fingerprinting Improvements
+* Port Range Parsing (`1-1024`)
+* JSON Export
+* CSV Export
+* Better CLI Output
+* IPv6 Support
 
 ---
 
@@ -71,57 +89,45 @@ Run all tests:
 pytest
 ```
 
-Run a specific test:
+Run a specific test module:
 
 ```bash
-pytest tests/test_banner_scan.py
+pytest tests/test_syn_scan.py
 ```
 
 ---
 
-## Example
+## Examples
 
-```python
-from scanner.scans.connect_scan import ConnectScanner
+Run a Connect Scan:
 
-scanner = ConnectScanner()
-
-results = await scanner.scan(
-    host="scanme.nmap.org",
-    ports=[22, 80, 443]
-)
-
-for result in results:
-    print(result)
+```bash
+python main.py scanme.nmap.org
 ```
 
-Banner Scanner:
+Scan multiple ports:
 
-```python
-from scanner.scans.banner_scan import BannerScanner
+```bash
+python main.py scanme.nmap.org -p 22,80,443
+```
 
-scanner = BannerScanner()
+Choose a scan type:
 
-results = await scanner.scan(
-    host="scanme.nmap.org",
-    ports=22
-)
-
-for result in results:
-    print(result)
+```bash
+python main.py scanme.nmap.org --scan-type connect
 ```
 
 ---
 
 ## Design Goals
 
-This project is built with the following goals in mind:
+This project is built around the following principles:
 
-- Clean Architecture
-- High Performance
-- Modularity
-- Extensibility
-- Testability
-- Readability
+* Clean Architecture
+* Object-Oriented Design
+* Asynchronous Programming
+* Extensibility
+* Maintainability
+* Testability
 
----
+The long-term goal is to evolve PythonPortScanner into a modular, production-quality network scanning tool while keeping the codebase clean and easy to extend.
