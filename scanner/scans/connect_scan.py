@@ -26,13 +26,20 @@ class ConnectScanner:
         return await self.runner.run(contexts)    
 
     async def _connect_scan(self, context):
-        
-        reader, writer = await asyncio.open_connection(
-            context.host,
-            context.port
-        )
 
-        writer.close()
-        await writer.wait_closed()
+        try:
+            reader, writer = await asyncio.open_connection(
+                context.host,
+                context.port
+            )
 
-        return PortState.OPEN
+            writer.close()
+            await writer.wait_closed()
+
+            return PortState.OPEN
+
+        except ConnectionRefusedError:
+            return PortState.CLOSED
+
+        except asyncio.TimeoutError:
+            return PortState.FILTERED
