@@ -1,8 +1,8 @@
 import asyncio
 from scanner.async_runner import AsyncRunner, TaskContext
+from scanner.core.base_scanner import BaseScanner
 
-
-class BannerScanner:
+class BannerScanner(BaseScanner):
 
     def __init__(self):
 

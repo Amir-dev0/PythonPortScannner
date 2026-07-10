@@ -3,8 +3,9 @@ import random
 import socket
 from scanner.async_runner import AsyncRunner, TaskContext
 from scanner.constants import PortState
+from scanner.core.base_scanner import BaseScanner
 
-class SynScanner:
+class SynScanner(BaseScanner):
 
     def __init__(self):
 

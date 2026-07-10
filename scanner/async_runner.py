@@ -1,7 +1,7 @@
 import asyncio
 import random
-from dataclasses import dataclass
-from typing import Any, Optional, Callable
+from scanner.core.task_context import TaskContext
+from scanner.core.task_result import TaskResult
 class AsyncRunner:
     
     """
@@ -139,31 +139,4 @@ class AsyncRunner:
         Return a copy of the current execution statistics.
         """
 
-        return self.stats.copy()            
-@dataclass
-class TaskResult():
-
-    """
-    Store the outcome of a completed task.
-    """
-
-    success: bool
-    data: Any = None
-    error: Optional[str] = None
-    attempt: int = 1
-
-    host: Optional[str] = None
-    port: Optional[int] = None
-    scan_type: Optional[str] = None
-
-@dataclass
-class TaskContext():
-
-    """
-    Describe a task and its execution metadata.
-    """
-
-    factory: Callable
-    host: str
-    port: int
-    scan_type: str
+        return self.stats.copy()
