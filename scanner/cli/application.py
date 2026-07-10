@@ -2,7 +2,7 @@ import asyncio
 from scanner.cli.parser import CLIParser
 from scanner.factory.scanner_factory import ScannerFactory
 from scanner.parser.port_parser import PortParser
-
+from scanner.cli.formatter import ResultFormatter
 
 class CLI:
 
@@ -27,13 +27,4 @@ class CLI:
             ports=ports
         )
 
-        for result in results:
-
-            if result.success:
-                print(
-                    f"{result.host}:{result.port} -> {result.data.value}"
-                )
-            else:
-                print(
-                    f"{result.host}:{result.port} -> ERROR ({result.error})"
-                )
+        ResultFormatter.print(results)
