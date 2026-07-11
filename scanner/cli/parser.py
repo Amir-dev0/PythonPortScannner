@@ -34,6 +34,19 @@ class CLIParser:
             help="Scan type to use."
         )
 
+        self._argument_parser.add_argument(
+            "--timeout",
+            type=float,
+            default=3,
+            help="Socket timeout in seconds."
+        )
+
+        self._argument_parser.add_argument(
+            "--concurrency",
+            type=int,
+            default=500,
+            help="Maximum concurrent scan tasks."
+        )
     def parse(self) -> argparse.Namespace:
         """
         Parse command-line arguments.

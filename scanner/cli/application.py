@@ -14,7 +14,11 @@ class CLI:
 
         args = self._parser.parse()
 
-        scanner = ScannerFactory.create(args.scan_type)
+        scanner = ScannerFactory.create(
+            scan_type=args.scan_type,
+            timeout=args.timeout,
+            concurrency=args.concurrency
+        )
 
         parser = PortParser()
 

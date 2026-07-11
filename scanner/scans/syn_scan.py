@@ -7,10 +7,16 @@ from scanner.core.base_scanner import BaseScanner
 
 class SynScanner(BaseScanner):
 
-    def __init__(self):
+    def __init__(
+        self,
+        timeout: float = 3,
+        concurrency: int = 500,
+    ) -> None:
 
-        self.runner = AsyncRunner()
-
+        self.runner = AsyncRunner(
+            timeout=timeout,
+            limit=concurrency,
+        )
     async def scan(
         self,
         host: str,

@@ -4,9 +4,16 @@ from scanner.constants import PortState
 from scanner.core.base_scanner import BaseScanner
 class ConnectScanner(BaseScanner):
 
-    def __init__(self):
-        self.runner = AsyncRunner()
+    def __init__(
+        self,
+        timeout: float = 3,
+        concurrency: int = 500,
+    ) -> None:
 
+        self.runner = AsyncRunner(
+            timeout=timeout,
+            limit=concurrency,
+        )
     async def scan(self, host, ports):
 
         if isinstance(ports, int):
