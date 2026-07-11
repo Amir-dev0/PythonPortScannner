@@ -3,12 +3,14 @@ from scanner.cli.parser import CLIParser
 from scanner.factory.scanner_factory import ScannerFactory
 from scanner.parser.port_parser import PortParser
 from scanner.cli.formatter import ResultFormatter
+from scanner.parser.host_parser import HostParser
 
 class CLI:
 
     def __init__(self):
 
         self._parser = CLIParser()
+        self._host_parser = HostParser()
 
     async def run(self):
 
@@ -17,18 +19,24 @@ class CLI:
         scanner = ScannerFactory.create(
             scan_type=args.scan_type,
             timeout=args.timeout,
-            concurrency=args.concurrency
+            concurrency=args.concurrency,
         )
 
-        parser = PortParser()
+        port_parser = PortParser()
 
-        ports = parser.parse(
+        ports = port_parser.parse(
             args.ports
         )
 
-        results = await scanner.scan(
-            host=args.host,
-            ports=ports
+        hosts = self._host_parser.parse(
+            args.host
         )
 
-        ResultFormatter.print(results)
+        for host in hosts:
+
+            results = await scanner.scan(
+                host=host,
+                ports=ports,
+            )
+
+            ResultFormatter.print(results)
