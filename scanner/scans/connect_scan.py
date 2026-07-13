@@ -2,6 +2,7 @@ import asyncio
 from scanner.async_runner import AsyncRunner, TaskContext
 from scanner.constants import PortState
 from scanner.core.base_scanner import BaseScanner
+from scanner.models.scan_info import ScanInfo
 class ConnectScanner(BaseScanner):
 
     def __init__(
@@ -44,10 +45,17 @@ class ConnectScanner(BaseScanner):
             writer.close()
             await writer.wait_closed()
 
-            return PortState.OPEN
+            return ScanInfo(
+                state=PortState.OPEN
+            )
 
         except ConnectionRefusedError:
-            return PortState.CLOSED
+            return ScanInfo(
+                state=PortState.CLOSED
+                ) 
 
         except asyncio.TimeoutError:
-            return PortState.FILTERED
+            return ScanInfo(
+                state=PortState.FILTERED
+            )
+            

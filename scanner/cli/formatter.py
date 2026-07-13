@@ -4,18 +4,33 @@ from scanner.async_runner import TaskResult
 class ResultFormatter:
 
     @staticmethod
-    def print(results: list[TaskResult]) -> None:
+    def print(results):
 
         for result in results:
 
-            if result.success:
+            endpoint = result.host
 
+            if result.port is not None:
+                endpoint += f":{result.port}"
+
+            if not result.success:
                 print(
-                    f"{result.host}:{result.port:<5} {result.data.value}"
+                    f"{endpoint}\tERROR ({result.error})"
                 )
+                continue
 
-            else:
+            message = (
+                f"{endpoint}\t"
+                f"{result.data.state.value}"
+            )
 
-                print(
-                    f"{result.host}:{result.port:<5} ERROR ({result.error})"
-                )
+            if result.data.banner:
+                message += f" | {result.data.banner}"
+
+            if result.data.service:
+                message += f" | Service: {result.data.service}"
+
+            if result.data.version:
+                message += f" | Version: {result.data.version}"
+
+            print(message)
