@@ -17,4 +17,9 @@ class HTTPProtocol(BaseProtocol):
 
         banner = await reader.read(1024)
 
-        return banner.decode(errors="ignore").strip()
+        response = banner.decode(errors="ignore")
+
+        headers = response.split("\r\n\r\n", 1)[0]
+        headers = headers.split("\n\n", 1)[0]
+
+        return headers.strip()
