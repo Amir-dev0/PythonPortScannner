@@ -3,6 +3,7 @@ from scanner.async_runner import AsyncRunner, TaskContext
 from scanner.core.base_scanner import BaseScanner
 from scanner.models.scan_info import ScanInfo
 from scanner.constants import PortState
+from scanner.detection.service_detector import ServiceDetector
 
 class BannerScanner(BaseScanner):
 
@@ -45,10 +46,15 @@ class BannerScanner(BaseScanner):
         try:
             banner = await reader.read(1024)
 
-            return ScanInfo(
+            scan_info = ScanInfo(
                 state=PortState.OPEN,
                 banner=banner.decode(errors="ignore").strip(),
             )
+
+            ServiceDetector.detect(scan_info)
+
+            return scan_info
+
         finally:
             writer.close()
             await writer.wait_closed()
