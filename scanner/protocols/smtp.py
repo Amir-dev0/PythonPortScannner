@@ -5,9 +5,10 @@ class SMTPProtocol(BaseProtocol):
 
     async def grab_banner(
         self,
+        context,
         reader,
         writer,
-    ) -> str:
+    ):
 
         banner = await reader.read(1024)
 

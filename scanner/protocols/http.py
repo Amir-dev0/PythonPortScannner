@@ -5,13 +5,21 @@ class HTTPProtocol(BaseProtocol):
 
     async def grab_banner(
         self,
+        context,
         reader,
         writer,
     ) -> str:
 
-        writer.write(
-            b"GET / HTTP/1.0\r\n\r\n"
+        request = (
+            f"GET / HTTP/1.1\r\n"
+            f"Host: {context.host}\r\n"
+            "Connection: close\r\n"
+            "User-Agent: PythonPortScanner\r\n"
+            "\r\n"
         )
+
+        writer.write(request.encode())
+        await writer.drain()
 
         await writer.drain()
 

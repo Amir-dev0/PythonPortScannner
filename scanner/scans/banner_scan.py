@@ -50,6 +50,7 @@ class BannerScanner(BaseScanner):
             )
 
             banner = await protocol.grab_banner(
+                context,
                 reader,
                 writer,
             )
