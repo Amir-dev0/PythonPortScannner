@@ -2,6 +2,12 @@ from scanner.protocols.base import BaseProtocol
 
 
 class FTPProtocol(BaseProtocol):
+    """
+    FTP banner grabber.
+
+    Reads the server greeting banner immediately after establishing
+    the connection.
+    """
 
     async def grab_banner(
         self,

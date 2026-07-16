@@ -2,6 +2,12 @@ from scanner.protocols.base import BaseProtocol
 
 
 class SMTPProtocol(BaseProtocol):
+    """
+    SMTP banner grabber.
+
+    Reads the SMTP server greeting banner after the TCP connection
+    is established.
+    """
 
     async def grab_banner(
         self,

@@ -2,6 +2,12 @@ from scanner.protocols.base import BaseProtocol
 
 
 class HTTPProtocol(BaseProtocol):
+    """
+    HTTP banner grabber.
+
+    Sends a minimal HTTP request to the target service and returns
+    the response headers as the banner.
+    """
 
     async def grab_banner(
         self,

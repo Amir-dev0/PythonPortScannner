@@ -12,6 +12,10 @@ SMTP_PORTS = {25}
 
 
 class ProtocolFactory:
+    """
+    Factory responsible for selecting the appropriate protocol
+    handler based on the target port.
+    """
 
     @staticmethod
     def create(port: int):

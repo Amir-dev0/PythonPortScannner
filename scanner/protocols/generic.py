@@ -2,6 +2,12 @@ from scanner.protocols.base import BaseProtocol
 
 
 class GenericProtocol(BaseProtocol):
+    """
+    Generic banner grabber.
+
+    Waits for data from the remote service without applying any
+    protocol-specific communication.
+    """
 
     async def grab_banner(
         self,
