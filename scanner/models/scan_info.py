@@ -15,4 +15,6 @@ class ScanInfo:
 
     service: str | None = None
 
+    product: str | None = None
+
     version: str | None = None
