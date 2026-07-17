@@ -1,0 +1,47 @@
+[
+    {
+        "success": true,
+        "data": {
+            "state": "Open",
+            "banner": null,
+            "service": null,
+            "product": null,
+            "version": null
+        },
+        "error": null,
+        "attempt": 1,
+        "host": "192.168.1.1",
+        "port": 80,
+        "scan_type": "connect"
+    },
+    {
+        "success": true,
+        "data": {
+            "state": "Closed",
+            "banner": null,
+            "service": null,
+            "product": null,
+            "version": null
+        },
+        "error": null,
+        "attempt": 1,
+        "host": "192.168.1.102",
+        "port": 80,
+        "scan_type": "connect"
+    },
+    {
+        "success": true,
+        "data": {
+            "state": "Closed",
+            "banner": null,
+            "service": null,
+            "product": null,
+            "version": null
+        },
+        "error": null,
+        "attempt": 1,
+        "host": "192.168.1.104",
+        "port": 80,
+        "scan_type": "connect"
+    }
+]

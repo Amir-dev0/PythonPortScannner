@@ -5,6 +5,7 @@ from scanner.parser.port_parser import PortParser
 from scanner.cli.formatter import ResultFormatter
 from scanner.parser.host_parser import HostParser
 from scanner.core.host_runner import HostRunner
+from scanner.output.factory import OutputFactory
 
 class CLI:
 
@@ -41,6 +42,23 @@ class CLI:
             ports=ports,
             scan_type=args.scan_type,
         )
+        if args.output:
+
+            results = []
+
+            for host_result in host_results:
+
+                if host_result.success:
+                    results.extend(host_result.data)
+
+            writer = OutputFactory.create(
+                args.output.suffix.lstrip(".")
+            )
+
+            writer.write(
+                results,
+                str(args.output),
+            )
         for host_result in host_results:
 
             if host_result.success:

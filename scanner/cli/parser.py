@@ -1,4 +1,6 @@
 import argparse
+from pathlib import Path
+
 
 class CLIParser:
     """
@@ -13,9 +15,7 @@ class CLIParser:
         self._register_arguments()
 
     def _register_arguments(self) -> None:
-        """
-        Register all command-line arguments.
-        """
+
         self._argument_parser.add_argument(
             "host",
             help="Target host or IP address."
@@ -47,8 +47,15 @@ class CLIParser:
             default=500,
             help="Maximum concurrent scan tasks."
         )
+
+        # 👇 این قسمت را اضافه کن
+        self._argument_parser.add_argument(
+            "-o",
+            "--output",
+            type=Path,
+            metavar="FILE",
+            help="Export scan results to a JSON or CSV file."
+        )
+
     def parse(self) -> argparse.Namespace:
-        """
-        Parse command-line arguments.
-        """
         return self._argument_parser.parse_args()
