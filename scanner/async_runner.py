@@ -2,6 +2,7 @@ import asyncio
 import random
 from scanner.core.task_context import TaskContext
 from scanner.core.task_result import TaskResult
+from scanner.cli.progress import ProgressReporter,NullProgressReporter
 class AsyncRunner:
     
     """
@@ -9,11 +10,20 @@ class AsyncRunner:
     timeout handling and retry support.
     """
 
-    def __init__(self, limit: int = 500, timeout: int = 3, retries: int = 2, backoff: bool = True):
+    def __init__(
+        self,
+        timeout: float = 3,
+        limit: int = 500,
+        retries: int = 2,
+        backoff: bool = True,
+        reporter: ProgressReporter | None = None,
+    ) -> None:
+        
         self.limit = limit
         self.timeout = timeout
         self.retries = retries
         self.backoff = backoff
+        self.reporter = reporter or NullProgressReporter()
         self.semaphore = asyncio.Semaphore(self.limit)
         self.stats = {
             "total": 0,
@@ -42,6 +52,8 @@ class AsyncRunner:
                     )
 
                     self.stats["success"] += 1
+
+                    self.reporter.advance()
 
                     return TaskResult(
                         success=True,
@@ -78,7 +90,9 @@ class AsyncRunner:
                 error_message = "TimeoutError"
             else:
                 error_message = str(last_error)   
-
+            
+            self.reporter.advance()
+            
             return TaskResult(
                 success=False,
                 data=None,
@@ -100,6 +114,7 @@ class AsyncRunner:
             "error": 0,
             "timeout": 0
         }
+        self.reporter.start(len(contexts))
 
         tasks = [
             self._worker(context)
@@ -108,6 +123,8 @@ class AsyncRunner:
 
         results = await asyncio.gather(*tasks)
 
+        self.reporter.finish()
+        
         return results
 
     def should_retry (self, error: Exception):
