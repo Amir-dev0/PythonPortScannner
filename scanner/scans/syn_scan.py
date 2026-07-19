@@ -5,42 +5,15 @@ from scanner.async_runner import AsyncRunner, TaskContext
 from scanner.constants import PortState
 from scanner.models.scan_info import ScanInfo
 from scanner.core.base_scanner import BaseScanner
+from scanner.cli.progress import ProgressReporter
 
 class SynScanner(BaseScanner):
 
-    def __init__(
-        self,
-        timeout: float = 3,
-        concurrency: int = 500,
-    ) -> None:
-
-        self.runner = AsyncRunner(
-            timeout=timeout,
-            limit=concurrency,
-        )
     async def scan(
         self,
-        host: str,
-        ports: int | list[int]
+        context: TaskContext,
     ):
-
-        if isinstance(ports, int):
-            ports = [ports]
-
-        contexts = []
-
-        for port in ports:
-
-            contexts.append(
-                TaskContext(
-                    factory=self._syn_scan,
-                    host=host,
-                    port=port,
-                    scan_type="syn"
-                )
-            )
-
-        return await self.runner.run(contexts)
+        return await self._syn_scan(context)
 
     async def _syn_scan(
         self,

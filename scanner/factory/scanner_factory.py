@@ -2,6 +2,7 @@ from scanner.scans.connect_scan import ConnectScanner
 from scanner.scans.syn_scan import SynScanner
 from scanner.scans.banner_scan import BannerScanner
 from scanner.core.base_scanner import BaseScanner
+from scanner.cli.progress import ProgressReporter
 
 class ScannerFactory:
 
@@ -10,6 +11,7 @@ class ScannerFactory:
         scan_type: str,
         timeout: float = 3,
         concurrency: int = 500,
+        reporter=None,
     ) -> BaseScanner:
 
         scanners = {
@@ -26,7 +28,4 @@ class ScannerFactory:
                 f"Unknown scan type: {scan_type}"
             )
 
-        return scanner_class(
-            timeout=timeout,
-            concurrency=concurrency,
-        )
+        return scanner_class()

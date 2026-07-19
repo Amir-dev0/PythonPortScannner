@@ -6,8 +6,10 @@ from scanner.constants import PortState
 @dataclass(slots=True)
 class ScanInfo:
     """
-    Represents the information collected from a scanned port.
+    Unified result model returned by all scanners.
     """
+
+    endpoint: str
 
     state: PortState
 
@@ -18,3 +20,5 @@ class ScanInfo:
     product: str | None = None
 
     version: str | None = None
+
+    latency: float | None = None

@@ -2,17 +2,13 @@ from dataclasses import dataclass
 from typing import Callable
 
 
-@dataclass
+@dataclass(slots=True)
 class TaskContext:
     """
-    Describe a task and its execution metadata.
+    Describe a single scan task.
     """
 
     factory: Callable
-
     host: str
-
+    port: int
     scan_type: str
-
-    port: int | None = None
-    ports: list[int] | None = None
