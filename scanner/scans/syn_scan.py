@@ -344,13 +344,16 @@ class SynScanner(BaseScanner):
 
         if (flags & (SYN | ACK)) == (SYN | ACK):
             return ScanInfo(
-                state=PortState.OPEN
+                endpoint="raw-packet",
+                state=PortState.OPEN,
             )
         if flags & RST:
             return ScanInfo(
-                state=PortState.CLOSED
+                endpoint="raw-packet",
+                state=PortState.CLOSED,
             )
 
         return ScanInfo(
-            state=PortState.UNKNOWN
+            endpoint="raw-packet",
+            state=PortState.UNKNOWN,
         )

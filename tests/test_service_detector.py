@@ -4,8 +4,8 @@ from scanner.models.scan_info import ScanInfo
 
 
 def detect(banner: str) -> ScanInfo:
-
     scan_info = ScanInfo(
+        endpoint="test:0",
         state=PortState.OPEN,
         banner=banner,
     )

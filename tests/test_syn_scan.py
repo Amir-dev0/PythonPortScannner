@@ -1,6 +1,7 @@
 import pytest
 import os
 from scanner.scans.syn_scan import SynScanner
+from scanner.constants import PortState
 
 requires_root = pytest.mark.skipif(
     os.geteuid() != 0,
@@ -93,7 +94,8 @@ def test_parse_response_open(scanner):
         b"\x00\x00"
     )
 
-    assert scanner._parse_response(packet) == "Open"
+    result = scanner._parse_response(packet)
+    assert result.state is PortState.OPEN
 
 
 def test_parse_response_closed(scanner):
@@ -115,7 +117,8 @@ def test_parse_response_closed(scanner):
         b"\x00\x00"
     )
 
-    assert scanner._parse_response(packet) == "Closed"
+    result = scanner._parse_response(packet)
+    assert result.state is PortState.CLOSED
 
 
 # -----------------------------
@@ -149,7 +152,7 @@ async def test_syn_scan_closed(scanner):
     assert results[0].success is True
     assert results[0].data == "Closed"
 
-
+@pytest.mark.skip(reason="multi-port orchestration moved to AsyncRunner")
 @pytest.mark.asyncio
 async def test_multiple_ports(scanner):
 
